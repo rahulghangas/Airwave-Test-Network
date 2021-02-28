@@ -13,8 +13,8 @@ import (
 )
 
 func Run() {
-
-	fo, err := os.Create("output/output.txt")
+	pwd, _ := os.Getwd()
+	fo, err := os.Create(pwd + "/../output/output.txt")
 	if err != nil {
 		panic(err)
 	}
@@ -27,21 +27,19 @@ func Run() {
 
 	opts, p, _, contentResolver, _, t := setup()
 
-	opts.SyncerOptions = opts.SyncerOptions.WithTimeout(10 * time.Second)
-	opts.GossiperOptions = opts.GossiperOptions.WithTimeout(10 * time.Second)
+	opts.SyncerOptions = opts.SyncerOptions.WithTimeout(10000 * time.Second)
+	opts.GossiperOptions = opts.GossiperOptions.WithTimeout(10000 * time.Second)
 	p = peer.New(
 		opts,
 		t)
 	p.Resolve(context.Background(), contentResolver)
 
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-
+	var x int64 = 0
 	go func() {
 		t.Receive(context.Background(), func() func(from id.Signatory, msg wire.Msg) error {
-			var x int64 = 0
 			go func() {
 				var seconds int64 = 0
 				ticker := time.NewTicker(time.Second)
@@ -57,7 +55,6 @@ func Run() {
 						}
 					}
 				}
-
 			}()
 			return func(from id.Signatory, msg wire.Msg) error {
 				atomic.AddInt64(&x, 1)
@@ -74,7 +71,7 @@ func Run() {
 	}()
 
 	ctxGossip, cancelGossip := context.WithTimeout(context.Background(), time.Second*3)
-	for iter := 0; iter < 10000; iter++ {
+	for iter := 0; iter < 1000; iter++ {
 		select {
 		case <-ctx.Done():
 			cancel()
@@ -88,5 +85,15 @@ func Run() {
 		p.Gossip(ctxGossip, contentID[:], &peer.DefaultSubnet)
 	}
 	cancelGossip()
-}
+	println("Node up and running")
+	time.Sleep(5*time.Second)
 
+	var prev int64 = -1
+	for {
+		if x := atomic.LoadInt64(&x); x == prev {
+			break
+		}
+		prev = x
+		time.Sleep(time.Second)
+	}
+}
