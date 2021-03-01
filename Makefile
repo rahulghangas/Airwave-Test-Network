@@ -19,4 +19,4 @@ plot:
 
 clean:
 	-rm -r build
-	rm infra/dns
+	-rm infra/dns
