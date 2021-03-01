@@ -41,12 +41,6 @@ resource "aws_key_pair" "airwave" {
   public_key = file("key.pub")
 }
 
-data "archive_file" "lambda_zip" {
-  type        = "zip"
-  source_file = "../build/bin/app"
-  output_path = "../build/bin/app.zip"
-}
-
 resource "aws_security_group" "airwave" {
 
   // Allow ssh connection through port 22
