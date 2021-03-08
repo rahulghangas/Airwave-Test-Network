@@ -29,7 +29,7 @@ func (gt *GossipTest) Perf(numPeers int, outputFilePath string, testOpts test.Op
 	if outputFilePath == "" {
 		_, b, _, _ := runtime.Caller(0)
 		basepath := filepath.Dir(b)
-		outputFilePath = filepath.Join(basepath, "../output/output.txt")
+		outputFilePath = filepath.Join(basepath, "../../output/output.txt")
 
 	}
 	fo, err := os.Create(outputFilePath)
