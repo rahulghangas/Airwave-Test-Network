@@ -4,3 +4,4 @@ build
 *.tfstate
 *.tfstate.backup
 key*
+output/output.txt
