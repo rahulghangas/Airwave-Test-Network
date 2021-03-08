@@ -9,20 +9,30 @@ import (
 	"github.com/renproject/aw/wire"
 	"github.com/renproject/id"
 	"os"
+	"path/filepath"
+	"runtime"
 	"sync/atomic"
 	"time"
 )
 
 const name = "Gossip"
-type GossipTest struct {}
+
+type GossipTest struct{}
+
 var _ test.Test = &GossipTest{}
 
 func (gt *GossipTest) Correctness(testOpts test.Options) {
 	panic(fmt.Sprintf("No corretness tests for %v test", name))
 }
 
-func (gt *GossipTest) Perf(numPeers int, outputFilPath string, testOpts test.Options) {
-	fo, err := os.Create(outputFilPath)
+func (gt *GossipTest) Perf(numPeers int, outputFilePath string, testOpts test.Options) {
+	if outputFilePath == "" {
+		_, b, _, _ := runtime.Caller(0)
+		basepath := filepath.Dir(b)
+		outputFilePath = filepath.Join(basepath, "../output/output.txt")
+
+	}
+	fo, err := os.Create(outputFilePath)
 	if err != nil {
 		panic(err)
 	}

@@ -23,7 +23,7 @@ import (
 var testCmd = &cobra.Command{
 	Use:   "test",
 	Short: "Run local/remote tests using subcommands and supported flags",
-	Long: `Run local/remote tests using subcommands and supported flags`,
+	Long:  `Run local/remote tests using subcommands and supported flags`,
 	//Run: func(cmd *cobra.Command, args []string) {
 	//	fmt.Println("test called")
 	//},
@@ -32,10 +32,10 @@ var testCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(testCmd)
 
-	testCmd.PersistentFlags().String("name","", "lowercase name of test to run")
+	testCmd.PersistentFlags().String("name", "", "lowercase name of test to run")
 	testCmd.PersistentFlags().Bool("correctness", false, "Run correctness test")
 	testCmd.PersistentFlags().Bool("perf", false, "Run performance test")
-	testCmd.PersistentFlags().StringP("output", "o", "../output/output.txt", "Define output file")
+	testCmd.PersistentFlags().StringP("output", "o", "", "Define output file")
 
 	// Here you will define your flags and configuration settings.
 
