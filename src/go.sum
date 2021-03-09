@@ -238,6 +238,10 @@ github.com/renproject/aw v0.4.1-0.20210217025526-875d475994c4 h1:iUy82M5kJ9jmXEt
 github.com/renproject/aw v0.4.1-0.20210217025526-875d475994c4/go.mod h1:WzE3LgCNZSMCwg8tObbLXz+AvZQ0zRW3jNgWqg6dEyQ=
 github.com/renproject/aw v0.4.1-0.20210303213645-e96a3ccbc0f0 h1:3kEn7rEYfdi6uupW1cWu2WG8/kqhyUtKWzRi/VcognY=
 github.com/renproject/aw v0.4.1-0.20210303213645-e96a3ccbc0f0/go.mod h1:WzE3LgCNZSMCwg8tObbLXz+AvZQ0zRW3jNgWqg6dEyQ=
+github.com/renproject/aw v0.4.1-0.20210308205154-2c5d27915603 h1:A/Vl80eBkpzpMx2wIwFtoN59FcLdGHNh2jXWgDu8V7U=
+github.com/renproject/aw v0.4.1-0.20210308205154-2c5d27915603/go.mod h1:WzE3LgCNZSMCwg8tObbLXz+AvZQ0zRW3jNgWqg6dEyQ=
+github.com/renproject/aw v0.4.1-0.20210309032102-70551e9ba4f9 h1:TrXLqm85o+uOB0ZvWoa2k9vv1h1dplBpjNYWrzZi11k=
+github.com/renproject/aw v0.4.1-0.20210309032102-70551e9ba4f9/go.mod h1:WzE3LgCNZSMCwg8tObbLXz+AvZQ0zRW3jNgWqg6dEyQ=
 github.com/renproject/id v0.4.2 h1:XseNDPPCJtsZjIWR7Qgf+zxy0Gt5xsLrfwpQxJt5wFQ=
 github.com/renproject/id v0.4.2/go.mod h1:bCzV4zZkyWetf0GvhJxMT9HQNnGUwzQpImtXOUXqq0k=
 github.com/renproject/pack v0.2.5/go.mod h1:pzX3Hc04RoPft89LaZJVp0xgngVGi90V7GvyC3mOGg4=
