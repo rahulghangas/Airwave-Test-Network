@@ -32,7 +32,6 @@ func setup(numPeers int, testOpts test.Options) ([]peer.Options, []*peer.Peer, [
 		opts[i] = peer.DefaultOptions().WithLogger(logger)
 
 		opts[i].GossiperOptions.Timeout = duration(testOpts.GossiperOptsTimeout)
-		opts[i].GossiperOptions.WiggleTimeout = duration(testOpts.GossiperWiggleTimeout)
 
 		opts[i].SyncerOptions.WiggleTimeout = duration(testOpts.SyncerWiggleTimeout)
 	}

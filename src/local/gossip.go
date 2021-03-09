@@ -122,5 +122,4 @@ func (gt *GossipTest) Perf(numPeers int, outputFilePath string, testOpts test.Op
 	cancel()
 
 	time.Sleep(5 * time.Second)
-	fmt.Printf("%v\n", testOpts)
 }
