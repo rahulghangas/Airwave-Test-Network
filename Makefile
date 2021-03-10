@@ -1,6 +1,9 @@
 build:
 	cd src && GOOS=linux GOARCH=amd64 go build -v -ldflags '-d -s -w' -a -tags netgo -installsuffix netgo -o ../build/bin/app && cd ..
 
+install:
+	cd src && go install awt && cd ..
+
 init:
 	terraform init infra
 
