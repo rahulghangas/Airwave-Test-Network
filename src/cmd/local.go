@@ -71,10 +71,6 @@ Define number of nodes in cluster for performance test using the flag --num or -
 		if err != nil {
 			panic("Acquiring `gossiperTimeout` flag failed")
 		}
-		gwt, err := cmd.Flags().GetInt("gossiperWiggleTimeout")
-		if err != nil {
-			panic("Acquiring `gossiperWiggleTimeout` flag failed")
-		}
 		st, err := cmd.Flags().GetInt("syncerTimeout")
 		if err != nil {
 			panic("Acquiring `syncerTimeout` flag failed")
@@ -92,7 +88,6 @@ Define number of nodes in cluster for performance test using the flag --num or -
 			TransportTimeout:      tt,
 			GossiperOptsTimeout:   got,
 			GossiperTimeout:       gt,
-			GossiperWiggleTimeout: gwt,
 			SyncerTimeout:         st,
 			SyncerWiggleTimeout:   swt,
 			OncePoolTimeout:       ot}
@@ -109,12 +104,11 @@ func init() {
 
 	localCmd.Flags().IntP("num", "n", 10,
 		"number of nodes to spin up for performance tests")
-	localCmd.Flags().Int("clientTimeout", 5, "Timeout for channel client")
-	localCmd.Flags().Int("transportTimeout", 1000, "Running time for transport layer")
-	localCmd.Flags().Int("gossiperOptsTimeout",  2, "Inner timeout defined in gossiper options")
-	localCmd.Flags().Int("gossiperTimeout", 2, "Timeout for call to Gossip")
-	localCmd.Flags().Int("gossiperWiggleTimeout", 2, "Wait period for a response to a sync request")
-	localCmd.Flags().Int("syncerTimeout", 2, "Timeout for call to Sync")
-	localCmd.Flags().Int("syncerWiggleTimeout",  2, "Wait period for a response to a sync request")
-	localCmd.Flags().Int("oncePoolTimeout", 10, "Timeout for a OncePool persistent connection")
+	localCmd.Flags().Int("ct", 5, "Timeout for channel client")
+	localCmd.Flags().Int("tt", 1000, "Running time for transport layer")
+	localCmd.Flags().Int("got",  2, "Inner timeout defined in gossiper options")
+	localCmd.Flags().Int("gt", 2, "Timeout for call to Gossip")
+	localCmd.Flags().Int("st", 2, "Timeout for call to Sync")
+	localCmd.Flags().Int("swt",  2, "Wait period for a response to a sync request")
+	localCmd.Flags().Int("opt", 10, "Timeout for a OncePool persistent connection")
 }

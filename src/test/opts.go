@@ -5,7 +5,6 @@ type Options struct {
 	TransportTimeout int
 	GossiperOptsTimeout int
 	GossiperTimeout int
-	GossiperWiggleTimeout int
 	SyncerTimeout int
 	SyncerWiggleTimeout int
 	OncePoolTimeout int
