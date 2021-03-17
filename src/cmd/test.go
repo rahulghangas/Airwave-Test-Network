@@ -36,6 +36,7 @@ func init() {
 	testCmd.PersistentFlags().Bool("correctness", false, "Run correctness test")
 	testCmd.PersistentFlags().Bool("perf", false, "Run performance test")
 	testCmd.PersistentFlags().StringP("output", "o", "", "Define output file")
+	testCmd.PersistentFlags().StringP("topology", "t", "full", "")
 
 	// Here you will define your flags and configuration settings.
 

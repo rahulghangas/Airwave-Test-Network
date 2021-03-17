@@ -55,31 +55,36 @@ Define number of nodes in cluster for performance test using the flag --num or -
 		if err != nil {
 			panic("Acquiring `num` flag failed")
 		}
-		ct, err := cmd.Flags().GetInt("clientTimeout")
+		topology, err := cmd.Flags().GetString("topology")
+		if err != nil {
+			panic("Acquiring `topology` flag failed")
+		}
+
+		ct, err := cmd.Flags().GetInt("ct")
 		if err != nil {
 			panic("Acquiring `clientTimeout` flag failed")
 		}
-		tt, err := cmd.Flags().GetInt("transportTimeout")
+		tt, err := cmd.Flags().GetInt("tt")
 		if err != nil {
 			panic("Acquiring `transportTimeout` flag failed")
 		}
-		got, err := cmd.Flags().GetInt("gossiperOptsTimeout")
+		got, err := cmd.Flags().GetInt("got")
 		if err != nil {
 			panic("Acquiring `gossiperOptsTimeout` flag failed")
 		}
-		gt, err := cmd.Flags().GetInt("gossiperTimeout")
+		gt, err := cmd.Flags().GetInt("gt")
 		if err != nil {
 			panic("Acquiring `gossiperTimeout` flag failed")
 		}
-		st, err := cmd.Flags().GetInt("syncerTimeout")
+		st, err := cmd.Flags().GetInt("st")
 		if err != nil {
 			panic("Acquiring `syncerTimeout` flag failed")
 		}
-		swt, err := cmd.Flags().GetInt("syncerWiggleTimeout")
+		swt, err := cmd.Flags().GetInt("swt")
 		if err != nil {
 			panic("Acquiring `syncerWiggletimeout` flag failed")
 		}
-		ot, err := cmd.Flags().GetInt("oncePoolTimeout")
+		ot, err := cmd.Flags().GetInt("opt")
 		if err != nil {
 			panic("Acquiring `oncePoolTimeout` flag failed")
 		}
@@ -90,9 +95,10 @@ Define number of nodes in cluster for performance test using the flag --num or -
 			GossiperTimeout:       gt,
 			SyncerTimeout:         st,
 			SyncerWiggleTimeout:   swt,
-			OncePoolTimeout:       ot}
+			OncePoolTimeout:       ot,
+		}
 
-		err = local.Run(name, outputFilename, num, correctness, perf, testOptions)
+		err = local.Run(name, test.Topology(topology), outputFilename, num, correctness, perf, testOptions)
 		if err != nil {
 			panic(err)
 		}
