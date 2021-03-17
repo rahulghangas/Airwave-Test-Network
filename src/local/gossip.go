@@ -25,7 +25,7 @@ func (gt *GossipTest) Correctness(testOpts test.Options) {
 	panic(fmt.Sprintf("No corretness tests for %v test", name))
 }
 
-func (gt *GossipTest) Perf(numPeers int, outputFilePath string, testOpts test.Options) {
+func (gt *GossipTest) Perf(numPeers int, topology test.Topology, outputFilePath string, testOpts test.Options) {
 	if outputFilePath == "" {
 		_, b, _, _ := runtime.Caller(0)
 		basepath := filepath.Dir(b)
@@ -47,6 +47,21 @@ func (gt *GossipTest) Perf(numPeers int, outputFilePath string, testOpts test.Op
 
 	for i := range opts {
 		peers[i].Resolve(context.Background(), contentResolvers[i])
+	}
+
+	switch topology {
+	case test.Star:
+		createBidiStarTopology(numPeers, opts, peers, tables)
+	case test.Ring:
+		createBidiRingTopology(numPeers, opts, peers, tables)
+	case test.Line:
+		createBidiLineTopology(numPeers, opts, peers, tables)
+	case test.Full:
+		createBidiFullyConnectedTopology(numPeers, opts, peers, tables)
+	case test.Random:
+		createBidiRandomTopology(numPeers, opts, peers, tables)
+	default:
+		panic("Topology not supported")
 	}
 
 	for i := range peers {
@@ -88,18 +103,6 @@ func (gt *GossipTest) Perf(numPeers int, outputFilePath string, testOpts test.Op
 			}())
 			transports[index].Run(ctx)
 		}()
-		for j := range peers {
-			if i != j {
-				transports[i].Link(peers[j].ID())
-			}
-		}
-
-		tables[i].AddPeer(opts[(i+1)%numPeers].PrivKey.Signatory(),
-			wire.NewUnsignedAddress(wire.TCP,
-				fmt.Sprintf("%v:%v", "localhost", uint16(3333+i+1)), uint64(time.Now().UnixNano())))
-		tables[(i+1)%numPeers].AddPeer(opts[i].PrivKey.Signatory(),
-			wire.NewUnsignedAddress(wire.TCP,
-				fmt.Sprintf("%v:%v", "localhost", uint16(3333+i)), uint64(time.Now().UnixNano())))
 	}
 
 	timeout := duration(testOpts.GossiperTimeout)

@@ -3,11 +3,13 @@ package local
 import (
 	"awt/test"
 	"context"
+	"fmt"
 	"github.com/renproject/aw/channel"
 	"github.com/renproject/aw/dht"
 	"github.com/renproject/aw/handshake"
 	"github.com/renproject/aw/peer"
 	"github.com/renproject/aw/transport"
+	"github.com/renproject/aw/wire"
 	"github.com/renproject/id"
 	"go.uber.org/zap"
 	"time"
@@ -15,6 +17,71 @@ import (
 
 func duration(num int) time.Duration {
 	return time.Duration(num) * time.Second
+}
+
+func createBidiRingTopology(n int, opts []peer.Options, peers []*peer.Peer, tables []dht.Table) {
+	for i := range peers {
+		peers[i].Link(peers[(i+1)%n].ID())
+		peers[(i+1)%n].Link(peers[i].ID())
+
+		tables[i].AddPeer(opts[(i+1)%n].PrivKey.Signatory(),
+			wire.NewUnsignedAddress(wire.TCP,
+				fmt.Sprintf("%v:%v", "localhost", uint16(3333+((i+1)%n))), uint64(time.Now().UnixNano())))
+		tables[(i+1)%n].AddPeer(opts[i].PrivKey.Signatory(),
+			wire.NewUnsignedAddress(wire.TCP,
+				fmt.Sprintf("%v:%v", "localhost", uint16(3333+i)), uint64(time.Now().UnixNano())))
+	}
+}
+
+func createBidiLineTopology(n int, opts []peer.Options, peers []*peer.Peer, tables []dht.Table) {
+	for i := range peers {
+		if i < n-1 {
+			peers[i].Link(peers[i+1].ID())
+			peers[i+1].Link(peers[i].ID())
+
+			tables[i].AddPeer(opts[i+1].PrivKey.Signatory(),
+				wire.NewUnsignedAddress(wire.TCP,
+					fmt.Sprintf("%v:%v", "localhost", uint16(3333+i+1)), uint64(time.Now().UnixNano())))
+			tables[i+1].AddPeer(opts[i].PrivKey.Signatory(),
+				wire.NewUnsignedAddress(wire.TCP,
+					fmt.Sprintf("%v:%v", "localhost", uint16(3333+i)), uint64(time.Now().UnixNano())))
+		}
+	}
+}
+
+func createBidiStarTopology(n int, opts []peer.Options, peers []*peer.Peer, tables []dht.Table) {
+	for i := range peers {
+		if i != 0 {
+			peers[0].Link(peers[i].ID())
+			peers[i].Link(peers[0].ID())
+
+			tables[i].AddPeer(opts[0].PrivKey.Signatory(),
+				wire.NewUnsignedAddress(wire.TCP,
+					fmt.Sprintf("%v:%v", "localhost", uint16(3333)), uint64(time.Now().UnixNano())))
+			tables[0].AddPeer(opts[i].PrivKey.Signatory(),
+				wire.NewUnsignedAddress(wire.TCP,
+					fmt.Sprintf("%v:%v", "localhost", uint16(3333+i)), uint64(time.Now().UnixNano())))
+
+		}
+	}
+}
+
+func createBidiRandomTopology(n int, opts []peer.Options, peers []*peer.Peer, tables []dht.Table) {
+	panic("unimplemented")
+}
+
+func createBidiFullyConnectedTopology(n int, opts []peer.Options, peers []*peer.Peer, tables []dht.Table) {
+	for i := range peers {
+		for j := range peers {
+			if i != j {
+				peers[i].Link(peers[j].ID())
+
+				tables[i].AddPeer(opts[j].PrivKey.Signatory(),
+					wire.NewUnsignedAddress(wire.TCP,
+						fmt.Sprintf("%v:%v", "localhost", uint16(3333+j)), uint64(time.Now().UnixNano())))
+			}
+		}
+	}
 }
 
 func setup(numPeers int, testOpts test.Options) ([]peer.Options, []*peer.Peer, []dht.Table, []dht.ContentResolver, []*channel.Client, []*transport.Transport) {
