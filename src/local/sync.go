@@ -90,11 +90,13 @@ func syncTest1(testOpts test.Options) {
 			channelCount++
 		case <-syncCtx.Done():
 			fmt.Println(string(colorRed), "[ ] - Follow up information sync test failed")
+			fmt.Println(string(colorReset))
 			panic("Context cancelled before successful syncing\n\n")
 		}
 	}
 
 	fmt.Println(string(colorGreen), "[x] - Follow up information sync test ran successfully\n\n")
+	fmt.Println(string(colorReset))
 }
 
 func syncTest2(testOpts test.Options) {
@@ -152,6 +154,7 @@ func syncTest2(testOpts test.Options) {
 			channelCount++
 		case <-ctx.Done():
 			fmt.Println(string(colorRed), "[ ] - Follow up information sync test failed")
+			fmt.Println(string(colorReset))
 			panic("Context cancelled before successful syncing\n\n")
 		}
 	}
@@ -161,8 +164,10 @@ func syncTest2(testOpts test.Options) {
 
 	if syncCount != totalMsgs {
 		fmt.Println(string(colorRed), syncCount,"/",totalMsgs, " synced in ", totalTime," seconds\n\n")
+		fmt.Println(string(colorReset))
 	} else {
 		fmt.Println(string(colorRed), "All messages (", totalMsgs, ") synced in ", totalTime," seconds\n\n")
+		fmt.Println(string(colorReset))
 	}
 }
 
