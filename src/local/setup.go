@@ -26,10 +26,10 @@ func createBidiRingTopology(n int, opts []peer.Options, peers []*peer.Peer, tabl
 
 		tables[i].AddPeer(opts[(i+1)%n].PrivKey.Signatory(),
 			wire.NewUnsignedAddress(wire.TCP,
-				fmt.Sprintf("%v:%v", "localhost", uint16(3333+((i+1)%n))), uint64(time.Now().UnixNano())))
+				fmt.Sprintf("%v:%v", "localhost", uint16(7777+((i+1)%n))), uint64(time.Now().UnixNano())))
 		tables[(i+1)%n].AddPeer(opts[i].PrivKey.Signatory(),
 			wire.NewUnsignedAddress(wire.TCP,
-				fmt.Sprintf("%v:%v", "localhost", uint16(3333+i)), uint64(time.Now().UnixNano())))
+				fmt.Sprintf("%v:%v", "localhost", uint16(7777+i)), uint64(time.Now().UnixNano())))
 	}
 }
 
@@ -41,10 +41,10 @@ func createBidiLineTopology(n int, opts []peer.Options, peers []*peer.Peer, tabl
 
 			tables[i].AddPeer(opts[i+1].PrivKey.Signatory(),
 				wire.NewUnsignedAddress(wire.TCP,
-					fmt.Sprintf("%v:%v", "localhost", uint16(3333+i+1)), uint64(time.Now().UnixNano())))
+					fmt.Sprintf("%v:%v", "localhost", uint16(7777+i+1)), uint64(time.Now().UnixNano())))
 			tables[i+1].AddPeer(opts[i].PrivKey.Signatory(),
 				wire.NewUnsignedAddress(wire.TCP,
-					fmt.Sprintf("%v:%v", "localhost", uint16(3333+i)), uint64(time.Now().UnixNano())))
+					fmt.Sprintf("%v:%v", "localhost", uint16(7777+i)), uint64(time.Now().UnixNano())))
 		}
 	}
 }
@@ -57,10 +57,10 @@ func createBidiStarTopology(n int, opts []peer.Options, peers []*peer.Peer, tabl
 
 			tables[i].AddPeer(opts[0].PrivKey.Signatory(),
 				wire.NewUnsignedAddress(wire.TCP,
-					fmt.Sprintf("%v:%v", "localhost", uint16(3333)), uint64(time.Now().UnixNano())))
+					fmt.Sprintf("%v:%v", "localhost", uint16(7777)), uint64(time.Now().UnixNano())))
 			tables[0].AddPeer(opts[i].PrivKey.Signatory(),
 				wire.NewUnsignedAddress(wire.TCP,
-					fmt.Sprintf("%v:%v", "localhost", uint16(3333+i)), uint64(time.Now().UnixNano())))
+					fmt.Sprintf("%v:%v", "localhost", uint16(7777+i)), uint64(time.Now().UnixNano())))
 
 		}
 	}
@@ -78,7 +78,7 @@ func createBidiFullyConnectedTopology(n int, opts []peer.Options, peers []*peer.
 
 				tables[i].AddPeer(opts[j].PrivKey.Signatory(),
 					wire.NewUnsignedAddress(wire.TCP,
-						fmt.Sprintf("%v:%v", "localhost", uint16(3333+j)), uint64(time.Now().UnixNano())))
+						fmt.Sprintf("%v:%v", "localhost", uint16(7777+j)), uint64(time.Now().UnixNano())))
 			}
 		}
 	}
@@ -96,7 +96,9 @@ func setup(numPeers int, testOpts test.Options) ([]peer.Options, []*peer.Peer, [
 	opts := make([]peer.Options, numPeers)
 	for i := range opts {
 		i := i
-		opts[i] = peer.DefaultOptions().WithLogger(logger)
+		opts[i] = peer.DefaultOptions().WithLogger(logger).
+			WithGossiperOptions(peer.DefaultGossiperOptions().WithLogger(logger)).
+			WithSyncerOptions(peer.DefaultSyncerOptions().WithLogger(logger))
 
 		opts[i].GossiperOptions.Timeout = duration(testOpts.GossiperOptsTimeout)
 
@@ -122,7 +124,7 @@ func setup(numPeers int, testOpts test.Options) ([]peer.Options, []*peer.Peer, [
 				WithLogger(logger).
 				WithClientTimeout(duration(testOpts.ClientTimeout)).
 				WithOncePoolOptions(handshake.DefaultOncePoolOptions().WithMinimumExpiryAge(duration(testOpts.OncePoolTimeout))).
-				WithPort(uint16(3333+i)),
+				WithPort(uint16(7777+i)),
 			self,
 			clients[i],
 			h,

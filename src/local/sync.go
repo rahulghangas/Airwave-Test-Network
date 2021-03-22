@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/renproject/aw/dht/dhtutil"
 	"github.com/renproject/id"
+	"sync/atomic"
 	"time"
 )
 
@@ -106,14 +107,16 @@ func syncTest2(testOpts test.Options) {
 
 	createBidiFullyConnectedTopology(num, opts, peers, tables)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 100 * time.Second)
 	defer cancel()
 	for i := range peers {
 		go peers[i].Run(ctx)
 	}
 
-	syncCount := 0
+	var syncCount int64 = 0
 
+	var totalMsgs int64 = int64(1 * (num - 1) * num)
+	endChan := make(chan struct{}, totalMsgs)
 	startTime := time.Now()
 	for round := 0; round < 1; round++ {
 		for i := range peers {
@@ -123,19 +126,37 @@ func syncTest2(testOpts test.Options) {
 
 			for j := range peers {
 				if i != j {
-					syncCtx, syncCancel := context.WithTimeout(ctx, 5 * time.Second)
-					hint := peers[i].ID()
-					syncedMsg, err := peers[j].Sync(syncCtx, hash[:], &hint)
-					if err == nil && bytes.Equal(syncedMsg, newMsg) {
-						syncCount++
-					}
-					syncCancel()
+					iCopy := i
+					jCopy := j
+					go func() {
+						syncCtx, syncCancel := context.WithTimeout(ctx, duration(testOpts.SyncerTimeout))
+						defer syncCancel()
+						hint := peers[iCopy].ID()
+						syncedMsg, err := peers[jCopy].Sync(syncCtx, hash[:], &hint)
+						if err == nil && bytes.Equal(syncedMsg, newMsg) {
+							atomic.AddInt64(&syncCount, 1)
+						} else {
+							fmt.Printf("Syncer %v failed to sync with peer %v with error: %v\n", jCopy, iCopy, err)
+						}
+						endChan <- struct{}{}
+					}()
 				}
 			}
 		}
 	}
+
+	var channelCount int64 = 0
+	for channelCount != totalMsgs {
+		select {
+		case <-endChan:
+			channelCount++
+		case <-ctx.Done():
+			fmt.Println(string(colorRed), "[ ] - Follow up information sync test failed")
+			panic("Context cancelled before successful syncing\n\n")
+		}
+	}
+
 	endTime := time.Now()
-	totalMsgs := 1 * (num - 1) * num
 	totalTime := endTime.Unix() - startTime.Unix()
 
 	if syncCount != totalMsgs {
