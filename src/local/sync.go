@@ -100,7 +100,7 @@ func syncTest1(testOpts test.Options) {
 }
 
 func syncTest2(testOpts test.Options) {
-	num := 100
+	num := 20
 	opts, peers, tables, contentResolvers, _, _ := setup(num, testOpts)
 
 	for i := range peers {
@@ -175,6 +175,9 @@ func (st *SyncTest) Correctness(testOpts test.Options) {
 	syncTest1(testOpts)
 	syncTest2(testOpts)
 }
+
+
+// Performance test
 
 func (st *SyncTest) Perf(num int, topology test.Topology, outputName string, testOpts test.Options) {
 	panic(fmt.Sprintf("No perf tests for %v test", name))

@@ -21,8 +21,20 @@ type GossipTest struct{}
 
 var _ test.Test = &GossipTest{}
 
+func gossipTest1(testOpts test.Options) {
+
+}
+
+func gossipTest2(testOpts test.Options) {
+
+}
+
+func gossipTest3(testOpts test.Options) {
+
+}
+
 func (gt *GossipTest) Correctness(testOpts test.Options) {
-	panic(fmt.Sprintf("No corretness tests for %v test", name))
+
 }
 
 func (gt *GossipTest) Perf(numPeers int, topology test.Topology, outputFilePath string, testOpts test.Options) {

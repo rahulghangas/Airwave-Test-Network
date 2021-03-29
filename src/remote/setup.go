@@ -1,6 +1,7 @@
-package network
+package remote
 
 import (
+	"awt/test"
 	"context"
 
 	"github.com/renproject/aw/channel"
@@ -13,7 +14,11 @@ import (
 	"time"
 )
 
-func setup() (peer.Options, *peer.Peer, dht.Table, dht.ContentResolver, *channel.Client, *transport.Transport) {
+func duration(num int) time.Duration {
+	return time.Duration(num) * time.Second
+}
+
+func setup(key *id.PrivKey, testOpts test.Options) (peer.Options, *peer.Peer, dht.Table, dht.ContentResolver, *channel.Client, *transport.Transport) {
 	loggerConfig := zap.NewProductionConfig()
 	loggerConfig.Level.SetLevel(zap.PanicLevel)
 	logger, err := loggerConfig.Build()
@@ -22,8 +27,12 @@ func setup() (peer.Options, *peer.Peer, dht.Table, dht.ContentResolver, *channel
 	}
 
 	// Init options for all peers.
-	opts := peer.DefaultOptions().WithLogger(logger)
+	opts := peer.DefaultOptions().WithPrivKey(key).WithLogger(logger).
+		WithGossiperOptions(peer.DefaultGossiperOptions().WithLogger(logger)).
+		WithSyncerOptions(peer.DefaultSyncerOptions().WithLogger(logger))
 
+	opts.GossiperOptions.Timeout = duration(2)
+	opts.SyncerOptions.WiggleTimeout = duration(2)
 
 	self := opts.PrivKey.Signatory()
 	h := handshake.Filter(func(id.Signatory) error { return nil }, handshake.ECIES(opts.PrivKey))
@@ -38,7 +47,7 @@ func setup() (peer.Options, *peer.Peer, dht.Table, dht.ContentResolver, *channel
 			WithLogger(logger).
 			WithClientTimeout(5*time.Second).
 			WithOncePoolOptions(handshake.DefaultOncePoolOptions().WithMinimumExpiryAge(10*time.Second)).
-			WithPort(uint16(3333)),
+			WithPort(uint16(7777)),
 		self,
 		client,
 		h,

@@ -1,38 +1,110 @@
-package network
+package remote
 
 import (
+	"awt/test"
+	"bufio"
 	"context"
+	"crypto/ecdsa"
 	"fmt"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/renproject/aw/dht/dhtutil"
 	"github.com/renproject/aw/peer"
 	"github.com/renproject/aw/wire"
 	"github.com/renproject/id"
+	"math/big"
 	"os"
+	"strings"
 	"sync/atomic"
 	"time"
 )
 
-func Run() {
+func Run(index int, topology test.Topology, outputFilename string, correctness bool, perf bool, testOptions test.Options) {
+	ipFile, err := os.Open("../ip")
+	if err != nil {
+		panic(err)
+	}
+	var ipList []string
+	scanner := bufio.NewScanner(ipFile)
+	for scanner.Scan() {
+		ipList = append(ipList, strings.TrimSpace(scanner.Text()))
+	}
+	ipFile.Close()
+
+	keyFile, err := os.Open("../keys")
+	if err != nil {
+		panic(err)
+	}
+
+	var key *id.PrivKey
+	var sigs []id.Signatory
+	keyScanner := bufio.NewScanner(keyFile)
+	counter := 0
+	for keyScanner.Scan() {
+		keyData := strings.SplitN(strings.TrimSpace(keyScanner.Text()), ",", 3)
+
+		x, _ := new(big.Int).SetString(keyData[1], 10)
+		y, _ := new(big.Int).SetString(keyData[2], 10)
+		pubkey := id.PubKey{
+			Curve: crypto.S256(),
+			X:     x,
+			Y:     y,
+		}
+		sigs = append(sigs, id.NewSignatory(&pubkey))
+
+		d, _ := new(big.Int).SetString(keyData[0], 10)
+		if counter == index {
+			key = &id.PrivKey{
+				PublicKey: ecdsa.PublicKey(pubkey),
+				D: d,
+			}
+		}
+
+		counter++
+	}
+
+	if len(sigs) != len(ipList) {
+		panic("length of sigs and ip(s) don't match")
+	}
+
+	GossipPerf(index, key, sigs, ipList, test.Topology(topology), outputFilename, correctness, perf, testOptions)
+}
+
+func GossipPerf(index int, key *id.PrivKey, sigs []id.Signatory, ipList []string, topology test.Topology, outputFilename string, correctness bool, perf bool, testOptions test.Options) {
 	pwd, _ := os.Getwd()
-	fo, err := os.Create(pwd + "/../output/output.txt")
+	fo, err := os.Create(pwd + "/../output.txt")
 	if err != nil {
 		panic(err)
 	}
 	// close fo on exit and check for its returned error
 	defer func() {
+		fo.Sync()
 		if err := fo.Close(); err != nil {
 			panic(err)
 		}
 	}()
 
-	opts, p, _, contentResolver, _, t := setup()
+	_, p, table, contentResolver, _, t := setup(key, testOptions)
 
-	opts.SyncerOptions = opts.SyncerOptions.WithTimeout(10000 * time.Second)
-	opts.GossiperOptions = opts.GossiperOptions.WithTimeout(10000 * time.Second)
-	p = peer.New(
-		opts,
-		t)
-	p.Resolve(context.Background(), contentResolver)
+	// Add Topology logic (currently only ues ring)
+	if index == 0 {
+		p.Link(sigs[len(sigs)-1])
+		table.AddPeer(sigs[len(sigs)-1],
+			wire.NewUnsignedAddress(wire.TCP,
+				fmt.Sprintf("%v:%v", ipList[len(sigs)-1], 8080),
+				uint64(time.Now().UnixNano())))
+	} else {
+		p.Link(sigs[index-1])
+		table.AddPeer(sigs[index-1],
+			wire.NewUnsignedAddress(wire.TCP,
+				fmt.Sprintf("%v:%v", ipList[index-1], 8080),
+				uint64(time.Now().UnixNano())))
+	}
+
+	p.Link(sigs[(index+1) % len(sigs)])
+	table.AddPeer(sigs[(index+1) % len(sigs)],
+		wire.NewUnsignedAddress(wire.TCP,
+			fmt.Sprintf("%v:%v", ipList[(index+1) % len(sigs)], 8080),
+			uint64(time.Now().UnixNano())))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -41,15 +113,13 @@ func Run() {
 	go func() {
 		t.Receive(context.Background(), func() func(from id.Signatory, msg wire.Msg) error {
 			go func() {
-				var seconds int64 = 0
 				ticker := time.NewTicker(time.Second)
 				defer ticker.Stop()
 				for {
 					select {
 					case <-ticker.C:
-						atomic.AddInt64(&seconds, 1)
-						//fmt.Printf("Average throughput for peer %v: %v/second\n", index, x/seconds)
-						_, err = fo.WriteString(fmt.Sprintf("%d\n", x/seconds))
+						_, err = fo.WriteString(fmt.Sprintf("%d\n", x))
+						atomic.StoreInt64(&x, 1)
 						if err != nil {
 							fmt.Printf("error writing to file: %v", err)
 						}
@@ -71,7 +141,7 @@ func Run() {
 	}()
 
 	ctxGossip, cancelGossip := context.WithTimeout(context.Background(), time.Second*3)
-	for iter := 0; iter < 1000; iter++ {
+	for iter := 0; iter < 10000; iter++ {
 		select {
 		case <-ctx.Done():
 			cancel()
@@ -86,14 +156,5 @@ func Run() {
 	}
 	cancelGossip()
 	println("Node up and running")
-	time.Sleep(5*time.Second)
-
-	var prev int64 = -1
-	for {
-		if x := atomic.LoadInt64(&x); x == prev {
-			break
-		}
-		prev = x
-		time.Sleep(time.Second)
-	}
+	time.Sleep(100*time.Second)
 }
