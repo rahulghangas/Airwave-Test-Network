@@ -20,7 +20,7 @@ func duration(num int) time.Duration {
 
 func setup(key *id.PrivKey, testOpts test.Options) (peer.Options, *peer.Peer, dht.Table, dht.ContentResolver, *channel.Client, *transport.Transport) {
 	loggerConfig := zap.NewProductionConfig()
-	loggerConfig.Level.SetLevel(zap.PanicLevel)
+	loggerConfig.Level.SetLevel(zap.DebugLevel)
 	logger, err := loggerConfig.Build()
 	if err != nil {
 		panic(err)
@@ -47,7 +47,7 @@ func setup(key *id.PrivKey, testOpts test.Options) (peer.Options, *peer.Peer, dh
 			WithLogger(logger).
 			WithClientTimeout(5*time.Second).
 			WithOncePoolOptions(handshake.DefaultOncePoolOptions().WithMinimumExpiryAge(10*time.Second)).
-			WithPort(uint16(7777)),
+			WithPort(uint16(8080)),
 		self,
 		client,
 		h,

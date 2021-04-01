@@ -109,9 +109,10 @@ func GossipPerf(index int, key *id.PrivKey, sigs []id.Signatory, ipList []string
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var x int64 = 0
+
 	go func() {
 		t.Receive(context.Background(), func() func(from id.Signatory, msg wire.Msg) error {
+			var x int64 = 0
 			go func() {
 				ticker := time.NewTicker(time.Second)
 				defer ticker.Stop()
@@ -140,11 +141,14 @@ func GossipPerf(index int, key *id.PrivKey, sigs []id.Signatory, ipList []string
 		t.Run(ctx)
 	}()
 
+	time.Sleep(5*time.Second)
+	println("Node up and running")
+
 	ctxGossip, cancelGossip := context.WithTimeout(context.Background(), time.Second*3)
 	for iter := 0; iter < 10000; iter++ {
 		select {
-		case <-ctx.Done():
-			cancel()
+		case <-ctxGossip.Done():
+			cancelGossip()
 			ctxGossip, cancelGossip = context.WithTimeout(context.Background(), time.Second*3)
 		default:
 		}
@@ -155,6 +159,5 @@ func GossipPerf(index int, key *id.PrivKey, sigs []id.Signatory, ipList []string
 		p.Gossip(ctxGossip, contentID[:], &peer.DefaultSubnet)
 	}
 	cancelGossip()
-	println("Node up and running")
 	time.Sleep(100*time.Second)
 }
