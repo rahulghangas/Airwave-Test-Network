@@ -26,7 +26,9 @@ func Run(index int, topology test.Topology, outputFilename string, correctness b
 	var ipList []string
 	scanner := bufio.NewScanner(ipFile)
 	for scanner.Scan() {
-		ipList = append(ipList, strings.TrimSpace(scanner.Text()))
+		ipAddr := strings.TrimSpace(scanner.Text())
+		ipList = append(ipList, ipAddr)
+		println("Adding IP address", ipAddr)
 	}
 	ipFile.Close()
 
@@ -42,8 +44,14 @@ func Run(index int, topology test.Topology, outputFilename string, correctness b
 	for keyScanner.Scan() {
 		keyData := strings.SplitN(strings.TrimSpace(keyScanner.Text()), ",", 3)
 
-		x, _ := new(big.Int).SetString(keyData[1], 10)
-		y, _ := new(big.Int).SetString(keyData[2], 10)
+		x, ok := new(big.Int).SetString(keyData[1], 10)
+		if !ok {
+			panic("X conversion failed")
+		}
+		y, ok := new(big.Int).SetString(keyData[2], 10)
+		if !ok {
+			panic("Y conversion failed")
+		}
 		pubkey := id.PubKey{
 			Curve: crypto.S256(),
 			X:     x,
@@ -51,7 +59,10 @@ func Run(index int, topology test.Topology, outputFilename string, correctness b
 		}
 		sigs = append(sigs, id.NewSignatory(&pubkey))
 
-		d, _ := new(big.Int).SetString(keyData[0], 10)
+		d, ok := new(big.Int).SetString(keyData[0], 10)
+		if !ok {
+			panic("D conversion failed")
+		}
 		if counter == index {
 			key = &id.PrivKey{
 				PublicKey: ecdsa.PublicKey(pubkey),
@@ -63,7 +74,7 @@ func Run(index int, topology test.Topology, outputFilename string, correctness b
 	}
 
 	if len(sigs) != len(ipList) {
-		panic("length of sigs and ip(s) don't match")
+		panic(fmt.Sprintf("length of sigs and ip(s) don't match: %v != %v", len(sigs), len(ipList)))
 	}
 
 	GossipPerf(index, key, sigs, ipList, test.Topology(topology), outputFilename, correctness, perf, testOptions)
@@ -111,7 +122,7 @@ func GossipPerf(index int, key *id.PrivKey, sigs []id.Signatory, ipList []string
 
 
 	go func() {
-		t.Receive(context.Background(), func() func(from id.Signatory, msg wire.Msg) error {
+		t.Receive(context.Background(), func() func(from id.Signatory, packet wire.Packet) error {
 			var x int64 = 0
 			go func() {
 				ticker := time.NewTicker(time.Second)
@@ -120,19 +131,19 @@ func GossipPerf(index int, key *id.PrivKey, sigs []id.Signatory, ipList []string
 					select {
 					case <-ticker.C:
 						_, err = fo.WriteString(fmt.Sprintf("%d\n", x))
-						atomic.StoreInt64(&x, 1)
+						atomic.StoreInt64(&x, 0)
 						if err != nil {
 							fmt.Printf("error writing to file: %v", err)
 						}
 					}
 				}
 			}()
-			return func(from id.Signatory, msg wire.Msg) error {
+			return func(from id.Signatory, packet wire.Packet) error {
 				atomic.AddInt64(&x, 1)
-				if err := p.Syncer().DidReceiveMessage(from, msg); err != nil {
+				if err := p.Syncer().DidReceiveMessage(from, packet.Msg); err != nil {
 					return err
 				}
-				if err := p.Gossiper().DidReceiveMessage(from, msg); err != nil {
+				if err := p.Gossiper().DidReceiveMessage(from, packet.Msg); err != nil {
 					return err
 				}
 				return nil
@@ -144,20 +155,13 @@ func GossipPerf(index int, key *id.PrivKey, sigs []id.Signatory, ipList []string
 	time.Sleep(5*time.Second)
 	println("Node up and running")
 
-	ctxGossip, cancelGossip := context.WithTimeout(context.Background(), time.Second*3)
-	for iter := 0; iter < 10000; iter++ {
-		select {
-		case <-ctxGossip.Done():
-			cancelGossip()
-			ctxGossip, cancelGossip = context.WithTimeout(context.Background(), time.Second*3)
-		default:
-		}
-
+	for iter := 0; iter < 50000; iter++ {
+		ctxGossip, cancelGossip := context.WithTimeout(context.Background(), time.Second*2)
 		msgHello := fmt.Sprintf(string(dhtutil.RandomContent()), p.ID().String())
 		contentID := id.NewHash([]byte(msgHello))
 		contentResolver.InsertContent(contentID[:], []byte(msgHello))
 		p.Gossip(ctxGossip, contentID[:], &peer.DefaultSubnet)
+		cancelGossip()
 	}
-	cancelGossip()
-	time.Sleep(100*time.Second)
+	time.Sleep(10*time.Second)
 }
