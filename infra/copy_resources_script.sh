@@ -15,6 +15,14 @@ cd ../generator && go run main.go $COUNT && cd ../infra
 
 INDEX=0
 while read p; do
-  ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -i key ec2-user@"$p" "echo $INDEX && exit" < /dev/null
+		(ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -i key ec2-user@"$p" "rm -rf build && unzip build.zip; cd build/bin && ./app test remote --index $INDEX" & sleep 100s; kill $!) &
+  INDEX=$(expr $INDEX + 1)
+done <dns
+echo "Running test on remote nodes"
+wait
+
+INDEX=0
+while read p; do
+  scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -i key ec2-user@"$p":~/build/output.txt ../output/output"$INDEX".txt
   INDEX=$(expr $INDEX + 1)
 done <dns
